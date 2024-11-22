@@ -1,6 +1,6 @@
 package com.cloudwebrtc.webrtc.record;
 
-import org.webrtc.audio.JavaAudioDeviceModule;
+import livekit.org.webrtc.audio.JavaAudioDeviceModule;
 import org.webrtc.audio.WebRtcAudioTrackUtils;
 
 public class OutputAudioSamplesInterceptor extends AudioSamplesInterceptor {
