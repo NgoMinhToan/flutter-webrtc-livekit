@@ -67,8 +67,8 @@ import livekit.org.webrtc.SessionDescription.Type;
 import livekit.org.webrtc.VideoTrack;
 import livekit.org.webrtc.audio.AudioDeviceModule;
 import livekit.org.webrtc.audio.JavaAudioDeviceModule;
-import org.webrtc.video.CustomVideoDecoderFactory;
-import org.webrtc.video.CustomVideoEncoderFactory;
+import livekit.org.webrtc.video.CustomVideoDecoderFactory;
+import livekit.org.webrtc.video.CustomVideoEncoderFactory;
 
 import java.io.File;
 import java.nio.ByteBuffer;
