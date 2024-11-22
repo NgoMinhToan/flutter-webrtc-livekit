@@ -5,7 +5,9 @@ import android.util.Log;
 
 import com.cloudwebrtc.webrtc.record.AudioTrackInterceptor;
 
-import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
+import livekit.org.webrtc.audio.JavaAudioDeviceModule;
+import livekit.org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
+import livekit.org.webrtc.voiceengine.WebRtcAudioTrack;
 
 import java.lang.reflect.Field;
 
