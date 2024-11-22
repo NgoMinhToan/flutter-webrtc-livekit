@@ -3,7 +3,7 @@ import 'dart:core';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background/flutter_background.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter_livekit_webrtc/flutter_livekit_webrtc.dart';
 import 'package:flutter_webrtc_example/src/widgets/screen_select_dialog.dart';
 
 /*
@@ -61,7 +61,7 @@ class _GetDisplayMediaSampleState extends State<GetDisplayMediaSample> {
               const androidConfig = FlutterBackgroundAndroidConfig(
                 notificationTitle: 'Screen Sharing',
                 notificationText: 'LiveKit Example is sharing the screen.',
-                notificationImportance: AndroidNotificationImportance.Default,
+                notificationImportance: AndroidNotificationImportance.normal,
                 notificationIcon: AndroidResource(
                     name: 'livekit_ic_launcher', defType: 'mipmap'),
               );
