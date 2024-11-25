@@ -33,9 +33,9 @@ target 'Runner' do
 
   library = flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
-  flutter_webrtc = library.find { |lib| lib["name"] == "flutter_webrtc" }
+  flutter_webrtc = library.find { |lib| lib["name"] == "flutter_livekit_webrtc" }
   if flutter_webrtc
-    puts "Found flutter_webrtc in:"
+    puts "Found flutter_livekit_webrtc in:"
     puts File.join(flutter_webrtc["path"], 'ios/webrtc-xcframework/LiveKitWebRTC.podspec')
     pod 'LiveKitWebRTC', :podspec => File.join(flutter_webrtc["path"], 'ios/webrtc-xcframework/LiveKitWebRTC.podspec')
   else
