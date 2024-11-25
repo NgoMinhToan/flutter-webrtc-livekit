@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '12.0'
+platform :ios, '13.4'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -28,7 +28,20 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  # pod 'LiveKitWebRTC', :git => 'path-to-my-lib/webrtc-xcframework.git', :tag => '114.5735.19'
+  # pod 'LiveKitWebRTC', :podspec => '../../ios/webrtc-xcframework/LiveKitWebRTC.podspec'
+
+  library = flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  flutter_webrtc = library.find { |lib| lib["name"] == "flutter_webrtc" }
+  if flutter_webrtc
+    puts "Found flutter_webrtc in:"
+    puts File.join(flutter_webrtc["path"], 'ios/webrtc-xcframework/LiveKitWebRTC.podspec')
+    pod 'LiveKitWebRTC', :podspec => File.join(flutter_webrtc["path"], 'ios/webrtc-xcframework/LiveKitWebRTC.podspec')
+  else
+    puts "flutter_webrtc not found."
+  end
+
   target 'RunnerTests' do
     inherit! :search_paths
   end

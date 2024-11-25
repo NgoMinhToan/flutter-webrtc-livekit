@@ -11,19 +11,19 @@
 #import "FlutterRTCVideoPlatformViewController.h"
 #endif
 #import <AVFoundation/AVFoundation.h>
-#import <WebRTC/RTCFieldTrials.h>
-#import <WebRTC/WebRTC.h>
+#import <LiveKitWebRTC/RTCFieldTrials.h>
+#import <LiveKitWebRTC/LiveKitWebRTC.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wprotocol"
 
-@interface VideoEncoderFactory : RTCDefaultVideoEncoderFactory
+@interface VideoEncoderFactory : LKRTCDefaultVideoEncoderFactory
 @end
 
-@interface VideoDecoderFactory : RTCDefaultVideoDecoderFactory
+@interface VideoDecoderFactory : LKRTCDefaultVideoDecoderFactory
 @end
 
-@interface VideoEncoderFactorySimulcast : RTCVideoEncoderFactorySimulcast
+@interface VideoEncoderFactorySimulcast : LKRTCVideoEncoderFactorySimulcast
 @end
 
 NSArray<RTC_OBJC_TYPE(RTCVideoCodecInfo) *>* motifyH264ProfileLevelId(
@@ -34,17 +34,17 @@ NSArray<RTC_OBJC_TYPE(RTCVideoCodecInfo) *>* motifyH264ProfileLevelId(
     RTC_OBJC_TYPE(RTCVideoCodecInfo)* info = [codecs objectAtIndex:i];
     if ([info.name isEqualToString:kRTCVideoCodecH264Name]) {
       NSString* hexString = info.parameters[@"profile-level-id"];
-      RTCH264ProfileLevelId* profileLevelId =
-          [[RTCH264ProfileLevelId alloc] initWithHexString:hexString];
+      LKRTCH264ProfileLevelId* profileLevelId =
+          [[LKRTCH264ProfileLevelId alloc] initWithHexString:hexString];
       if (profileLevelId.level < RTCH264Level5_1) {
-        RTCH264ProfileLevelId* newProfileLevelId =
-            [[RTCH264ProfileLevelId alloc] initWithProfile:profileLevelId.profile
+        LKRTCH264ProfileLevelId* newProfileLevelId =
+            [[LKRTCH264ProfileLevelId alloc] initWithProfile:profileLevelId.profile
                                                      level:RTCH264Level5_1];
         // NSLog(@"profile-level-id: %@ => %@", hexString, [newProfileLevelId hexString]);
         NSMutableDictionary* parametersCopy = [[NSMutableDictionary alloc] init];
         [parametersCopy addEntriesFromDictionary:info.parameters];
         [parametersCopy setObject:[newProfileLevelId hexString] forKey:@"profile-level-id"];
-        [newCodecs insertObject:[[RTCVideoCodecInfo alloc] initWithName:kRTCVideoCodecH264Name
+        [newCodecs insertObject:[[LKRTCVideoCodecInfo alloc] initWithName:kRTCVideoCodecH264Name
                                                              parameters:parametersCopy]
                         atIndex:i];
       } else {
@@ -181,8 +181,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
 }
 
 - (void)detachFromEngineForRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  for (RTCPeerConnection* peerConnection in _peerConnections.allValues) {
-    for (RTCDataChannel* dataChannel in peerConnection.dataChannels) {
+  for (LKRTCPeerConnection* peerConnection in _peerConnections.allValues) {
+    for (LKRTCDataChannel* dataChannel in peerConnection.dataChannels) {
       dataChannel.eventSink = nil;
     }
     peerConnection.eventSink = nil;
@@ -210,7 +210,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   NSDictionary* interuptionDict = notification.userInfo;
   NSInteger routeChangeReason =
       [[interuptionDict valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
-  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  LKRTCAudioSession* session = [LKRTCAudioSession sharedInstance];
   if (self.eventSink &&
       (routeChangeReason == AVAudioSessionRouteChangeReasonNewDeviceAvailable ||
        routeChangeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable ||
@@ -230,10 +230,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
         VideoEncoderFactorySimulcast* simulcastFactory =
             [[VideoEncoderFactorySimulcast alloc] initWithPrimary:encoderFactory fallback:encoderFactory];
 
-        _peerConnectionFactory = [[RTCPeerConnectionFactory alloc] initWithEncoderFactory:simulcastFactory
+        _peerConnectionFactory = [[LKRTCPeerConnectionFactory alloc] initWithEncoderFactory:simulcastFactory
                                                                            decoderFactory:decoderFactory];
 
-        RTCPeerConnectionFactoryOptions *options = [[RTCPeerConnectionFactoryOptions alloc] init];
+        LKRTCPeerConnectionFactoryOptions *options = [[LKRTCPeerConnectionFactoryOptions alloc] init];
         for (NSString* adapter in networkIgnoreMask)
         {
             if ([@"adapterTypeEthernet" isEqualToString:adapter]) {
@@ -274,8 +274,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* configuration = argsMap[@"configuration"];
     NSDictionary* constraints = argsMap[@"constraints"];
 
-    RTCPeerConnection* peerConnection = [self.peerConnectionFactory
-        peerConnectionWithConfiguration:[self RTCConfiguration:configuration]
+    LKRTCPeerConnection* peerConnection = [self.peerConnectionFactory
+        peerConnectionWithConfiguration:[self LKRTCConfiguration:configuration]
                             constraints:[self parseMediaConstraints:constraints]
                                delegate:self];
 
@@ -323,7 +323,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSDictionary* constraints = argsMap[@"constraints"];
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       [self peerConnectionCreateOffer:constraints peerConnection:peerConnection result:result];
     } else {
@@ -336,7 +336,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSDictionary* constraints = argsMap[@"constraints"];
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       [self peerConnectionCreateAnswer:constraints peerConnection:peerConnection result:result];
     } else {
@@ -349,10 +349,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
 
     NSString* streamId = ((NSString*)argsMap[@"streamId"]);
-    RTCMediaStream* stream = self.localStreams[streamId];
+    LKRTCMediaStream* stream = self.localStreams[streamId];
 
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
 
     if (peerConnection && stream) {
       [peerConnection addStream:stream];
@@ -368,10 +368,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
 
     NSString* streamId = ((NSString*)argsMap[@"streamId"]);
-    RTCMediaStream* stream = self.localStreams[streamId];
+    LKRTCMediaStream* stream = self.localStreams[streamId];
 
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
 
     if (peerConnection && stream) {
       [peerConnection removeStream:stream];
@@ -389,9 +389,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* trackId = argsMap[@"trackId"];
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
 
-    RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
-    if (track != nil && [track isKindOfClass:[RTCVideoTrack class]]) {
-      RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+    LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
+    if (track != nil && [track isKindOfClass:[LKRTCVideoTrack class]]) {
+      LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
       [self mediaStreamTrackCaptureFrame:videoTrack toPath:path result:result];
     } else {
       if (track == nil) {
@@ -406,11 +406,11 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"setLocalDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     NSDictionary* descriptionMap = argsMap[@"description"];
     NSString* sdp = descriptionMap[@"sdp"];
-    RTCSdpType sdpType = [RTCSessionDescription typeForString:descriptionMap[@"type"]];
-    RTCSessionDescription* description = [[RTCSessionDescription alloc] initWithType:sdpType
+    RTCSdpType sdpType = [LKRTCSessionDescription typeForString:descriptionMap[@"type"]];
+    LKRTCSessionDescription* description = [[LKRTCSessionDescription alloc] initWithType:sdpType
                                                                                  sdp:sdp];
     if (peerConnection) {
       [self peerConnectionSetLocalDescription:description
@@ -425,11 +425,11 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"setRemoteDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     NSDictionary* descriptionMap = argsMap[@"description"];
     NSString* sdp = descriptionMap[@"sdp"];
-    RTCSdpType sdpType = [RTCSessionDescription typeForString:descriptionMap[@"type"]];
-    RTCSessionDescription* description = [[RTCSessionDescription alloc] initWithType:sdpType
+    RTCSdpType sdpType = [LKRTCSessionDescription typeForString:descriptionMap[@"type"]];
+    LKRTCSessionDescription* description = [[LKRTCSessionDescription alloc] initWithType:sdpType
                                                                                  sdp:sdp];
 
     if (peerConnection) {
@@ -449,10 +449,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     int duration = ((NSNumber*)argsMap[@"duration"]).intValue;
     int interToneGap = ((NSNumber*)argsMap[@"gap"]).intValue;
 
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
-      RTCRtpSender* audioSender = nil;
-      for (RTCRtpSender* rtpSender in peerConnection.senders) {
+      LKRTCRtpSender* audioSender = nil;
+      for (LKRTCRtpSender* rtpSender in peerConnection.senders) {
         if ([[[rtpSender track] kind] isEqualToString:@"audio"]) {
           audioSender = rtpSender;
         }
@@ -488,10 +488,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     }
     NSString* sdpMid = candMap[@"sdpMid"];
 
-    RTCIceCandidate* candidate = [[RTCIceCandidate alloc] initWithSdp:sdp
+    LKRTCIceCandidate* candidate = [[LKRTCIceCandidate alloc] initWithSdp:sdp
                                                         sdpMLineIndex:sdpMLineIndex
                                                                sdpMid:sdpMid];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
 
     if (peerConnection) {
       [self peerConnectionAddICECandidate:candidate peerConnection:peerConnection result:result];
@@ -505,7 +505,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     id trackId = argsMap[@"trackId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       if (trackId != nil && trackId != [NSNull null]) {
         return [self peerConnectionGetStatsForTrackId:trackId
@@ -548,12 +548,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"streamDispose" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* streamId = argsMap[@"streamId"];
-    RTCMediaStream* stream = self.localStreams[streamId];
+    LKRTCMediaStream* stream = self.localStreams[streamId];
     BOOL shouldCallResult = YES;
     if (stream) {
-      for (RTCVideoTrack* track in stream.videoTracks) {
+      for (LKRTCVideoTrack* track in stream.videoTracks) {
         [_localTracks removeObjectForKey:track.trackId];
-        RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+        LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
         CapturerStopHandler stopHandler = self.videoCapturerStopHandlers[videoTrack.trackId];
         if (stopHandler) {
           shouldCallResult = NO;
@@ -564,7 +564,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
           [self.videoCapturerStopHandlers removeObjectForKey:videoTrack.trackId];
         }
       }
-      for (RTCAudioTrack* track in stream.audioTracks) {
+      for (LKRTCAudioTrack* track in stream.audioTracks) {
         [_localTracks removeObjectForKey:track.trackId];
       }
       [self.localStreams removeObjectForKey:streamId];
@@ -580,7 +580,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSNumber* enabled = argsMap[@"enabled"];
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
 
-    RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
+    LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
     if (track != nil) {
       track.isEnabled = enabled.boolValue;
     }
@@ -590,15 +590,15 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* streamId = argsMap[@"streamId"];
     NSString* trackId = argsMap[@"trackId"];
 
-    RTCMediaStream* stream = self.localStreams[streamId];
+    LKRTCMediaStream* stream = self.localStreams[streamId];
     if (stream) {
-      RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
+      LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
       if (track != nil) {
-        if ([track isKindOfClass:[RTCAudioTrack class]]) {
-          RTCAudioTrack* audioTrack = (RTCAudioTrack*)track;
+        if ([track isKindOfClass:[LKRTCAudioTrack class]]) {
+          LKRTCAudioTrack* audioTrack = (LKRTCAudioTrack*)track;
           [stream addAudioTrack:audioTrack];
-        } else if ([track isKindOfClass:[RTCVideoTrack class]]) {
-          RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+        } else if ([track isKindOfClass:[LKRTCVideoTrack class]]) {
+          LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
           [stream addVideoTrack:videoTrack];
         }
       } else {
@@ -616,15 +616,15 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* streamId = argsMap[@"streamId"];
     NSString* trackId = argsMap[@"trackId"];
-    RTCMediaStream* stream = self.localStreams[streamId];
+    LKRTCMediaStream* stream = self.localStreams[streamId];
     if (stream) {
-      RTCMediaStreamTrack* track = self.localTracks[trackId];
+      LKRTCMediaStreamTrack* track = self.localTracks[trackId];
       if (track != nil) {
-        if ([track isKindOfClass:[RTCAudioTrack class]]) {
-          RTCAudioTrack* audioTrack = (RTCAudioTrack*)track;
+        if ([track isKindOfClass:[LKRTCAudioTrack class]]) {
+          LKRTCAudioTrack* audioTrack = (LKRTCAudioTrack*)track;
           [stream removeAudioTrack:audioTrack];
-        } else if ([track isKindOfClass:[RTCVideoTrack class]]) {
-          RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+        } else if ([track isKindOfClass:[LKRTCVideoTrack class]]) {
+          LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
           [stream removeVideoTrack:videoTrack];
         }
       } else {
@@ -643,14 +643,14 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* trackId = argsMap[@"trackId"];
     BOOL audioTrack = NO;
     for (NSString* streamId in self.localStreams) {
-      RTCMediaStream* stream = [self.localStreams objectForKey:streamId];
-      for (RTCAudioTrack* track in stream.audioTracks) {
+      LKRTCMediaStream* stream = [self.localStreams objectForKey:streamId];
+      for (LKRTCAudioTrack* track in stream.audioTracks) {
         if ([trackId isEqualToString:track.trackId]) {
           [stream removeAudioTrack:track];
           audioTrack = YES;
         }
       }
-      for (RTCVideoTrack* track in stream.videoTracks) {
+      for (LKRTCVideoTrack* track in stream.videoTracks) {
         if ([trackId isEqualToString:track.trackId]) {
           [stream removeVideoTrack:track];
           CapturerStopHandler stopHandler = self.videoCapturerStopHandlers[track.trackId];
@@ -671,7 +671,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"restartIce" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (!peerConnection) {
       result([FlutterError errorWithCode:@"restartIce: peerConnection is nil"
                                  message:nil
@@ -685,7 +685,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
 
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       [peerConnection close];
       [self.peerConnections removeObjectForKey:peerConnectionId];
@@ -695,11 +695,11 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       [peerConnection.remoteTracks removeAllObjects];
 
       // Clean up peerConnection's dataChannels.
-      NSMutableDictionary<NSString*, RTCDataChannel*>* dataChannels = peerConnection.dataChannels;
+      NSMutableDictionary<NSString*, LKRTCDataChannel*>* dataChannels = peerConnection.dataChannels;
       for (NSString* dataChannelId in dataChannels) {
         dataChannels[dataChannelId].delegate = nil;
-        // There is no need to close the RTCDataChannel because it is owned by the
-        // RTCPeerConnection and the latter will close the former.
+        // There is no need to close the LKRTCDataChannel because it is owned by the
+        // LKRTCPeerConnection and the latter will close the former.
       }
       [dataChannels removeAllObjects];
     }
@@ -731,8 +731,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                                  details:nil]);
       return;
     }
-    RTCMediaStream* stream = nil;
-    RTCVideoTrack* videoTrack = nil;
+    LKRTCMediaStream* stream = nil;
+    LKRTCVideoTrack* videoTrack = nil;
     if ([ownerTag isEqualToString:@"local"]) {
       stream = _localStreams[streamId];
     }
@@ -742,13 +742,13 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     if (stream) {
       NSArray* videoTracks = stream ? stream.videoTracks : nil;
       videoTrack = videoTracks && videoTracks.count ? videoTracks[0] : nil;
-      for (RTCVideoTrack* track in videoTracks) {
+      for (LKRTCVideoTrack* track in videoTracks) {
         if ([track.trackId isEqualToString:trackId]) {
           videoTrack = track;
         }
       }
       if (!videoTrack) {
-        NSLog(@"Not found video track for RTCMediaStream: %@", streamId);
+        NSLog(@"Not found video track for LKRTCMediaStream: %@", streamId);
       }
     }
     [self rendererSetSrcObject:render stream:videoTrack];
@@ -768,8 +768,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                                    details:nil]);
         return;
       }
-      RTCMediaStream* stream = nil;
-      RTCVideoTrack* videoTrack = nil;
+      LKRTCMediaStream* stream = nil;
+      LKRTCVideoTrack* videoTrack = nil;
       if ([ownerTag isEqualToString:@"local"]) {
         stream = _localStreams[streamId];
       }
@@ -779,13 +779,13 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       if (stream) {
         NSArray* videoTracks = stream ? stream.videoTracks : nil;
         videoTrack = videoTracks && videoTracks.count ? videoTracks[0] : nil;
-        for (RTCVideoTrack* track in videoTracks) {
+        for (LKRTCVideoTrack* track in videoTracks) {
           if ([track.trackId isEqualToString:trackId]) {
             videoTrack = track;
           }
         }
         if (!videoTrack) {
-          NSLog(@"Not found video track for RTCMediaStream: %@", streamId);
+          NSLog(@"Not found video track for LKRTCMediaStream: %@", streamId);
         }
       }
       render.videoTrack = videoTrack;
@@ -809,9 +809,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
      else if ([@"mediaStreamTrackHasTorch" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
-    RTCMediaStreamTrack* track = self.localTracks[trackId];
-    if (track != nil && [track isKindOfClass:[RTCVideoTrack class]]) {
-      RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+    LKRTCMediaStreamTrack* track = self.localTracks[trackId];
+    if (track != nil && [track isKindOfClass:[LKRTCVideoTrack class]]) {
+      LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
       [self mediaStreamTrackHasTorch:videoTrack result:result];
     } else {
       if (track == nil) {
@@ -827,9 +827,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
     BOOL torch = [argsMap[@"torch"] boolValue];
-    RTCMediaStreamTrack* track = self.localTracks[trackId];
-    if (track != nil && [track isKindOfClass:[RTCVideoTrack class]]) {
-      RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+    LKRTCMediaStreamTrack* track = self.localTracks[trackId];
+    if (track != nil && [track isKindOfClass:[LKRTCVideoTrack class]]) {
+      LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
       [self mediaStreamTrackSetTorch:videoTrack torch:torch result:result];
     } else {
       if (track == nil) {
@@ -845,9 +845,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
     double zoomLevel = [argsMap[@"zoomLevel"] doubleValue];
-    RTCMediaStreamTrack* track = self.localTracks[trackId];
-    if (track != nil && [track isKindOfClass:[RTCVideoTrack class]]) {
-      RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+    LKRTCMediaStreamTrack* track = self.localTracks[trackId];
+    if (track != nil && [track isKindOfClass:[LKRTCVideoTrack class]]) {
+      LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
       [self mediaStreamTrackSetZoom:videoTrack zoomLevel:zoomLevel result:result];
     } else {
       if (track == nil) {
@@ -862,9 +862,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"mediaStreamTrackSwitchCamera" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
-    RTCMediaStreamTrack* track = self.localTracks[trackId];
-    if (track != nil && [track isKindOfClass:[RTCVideoTrack class]]) {
-      RTCVideoTrack* videoTrack = (RTCVideoTrack*)track;
+    LKRTCMediaStreamTrack* track = self.localTracks[trackId];
+    if (track != nil && [track isKindOfClass:[LKRTCVideoTrack class]]) {
+      LKRTCVideoTrack* videoTrack = (LKRTCVideoTrack*)track;
       [self mediaStreamTrackSwitchCamera:videoTrack result:result];
     } else {
       if (track == nil) {
@@ -882,10 +882,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSNumber* volume = argsMap[@"volume"];
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
 
-    RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
-    if (track != nil && [track isKindOfClass:[RTCAudioTrack class]]) {
-      RTCAudioTrack* audioTrack = (RTCAudioTrack*)track;
-      RTCAudioSource* audioSource = audioTrack.source;
+    LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:peerConnectionId];
+    if (track != nil && [track isKindOfClass:[LKRTCAudioTrack class]]) {
+      LKRTCAudioTrack* audioTrack = (LKRTCAudioTrack*)track;
+      LKRTCAudioSource* audioSource = audioTrack.source;
       audioSource.volume = [volume doubleValue];
     }
     result(nil);
@@ -893,9 +893,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
     NSNumber* mute = argsMap[@"mute"];
-    RTCMediaStreamTrack* track = self.localTracks[trackId];
-    if (track != nil && [track isKindOfClass:[RTCAudioTrack class]]) {
-      RTCAudioTrack* audioTrack = (RTCAudioTrack*)track;
+    LKRTCMediaStreamTrack* track = self.localTracks[trackId];
+    if (track != nil && [track isKindOfClass:[LKRTCAudioTrack class]]) {
+      LKRTCAudioTrack* audioTrack = (LKRTCAudioTrack*)track;
       audioTrack.isEnabled = !mute.boolValue;
     }
     result(nil);
@@ -930,13 +930,13 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   else if ([@"getLocalDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
-      RTCSessionDescription* sdp = peerConnection.localDescription;
+      LKRTCSessionDescription* sdp = peerConnection.localDescription;
       if (nil == sdp) {
         result(nil);
       } else {
-        NSString* type = [RTCSessionDescription stringForType:sdp.type];
+        NSString* type = [LKRTCSessionDescription stringForType:sdp.type];
         result(@{@"sdp" : sdp.sdp, @"type" : type});
       }
     } else {
@@ -948,13 +948,13 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getRemoteDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
-      RTCSessionDescription* sdp = peerConnection.remoteDescription;
+      LKRTCSessionDescription* sdp = peerConnection.remoteDescription;
       if (nil == sdp) {
         result(nil);
       } else {
-        NSString* type = [RTCSessionDescription stringForType:sdp.type];
+        NSString* type = [LKRTCSessionDescription stringForType:sdp.type];
         result(@{@"sdp" : sdp.sdp, @"type" : type});
       }
     } else {
@@ -967,9 +967,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSDictionary* configuration = argsMap[@"configuration"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
-      [self peerConnectionSetConfiguration:[self RTCConfiguration:configuration]
+      [self peerConnectionSetConfiguration:[self LKRTCConfiguration:configuration]
                             peerConnection:peerConnection];
       result(nil);
     } else {
@@ -983,7 +983,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* trackId = argsMap[@"trackId"];
     NSArray* streamIds = argsMap[@"streamIds"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -992,14 +992,14 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       return;
     }
 
-    RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
+    LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
     if (track == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: track not found!"]
                                  details:nil]);
       return;
     }
-    RTCRtpSender* sender = [peerConnection addTrack:track streamIds:streamIds];
+    LKRTCRtpSender* sender = [peerConnection addTrack:track streamIds:streamIds];
     if (sender == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1013,7 +1013,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* senderId = argsMap[@"senderId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1021,7 +1021,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
+    LKRTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
     if (sender == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: sender not found!"]
@@ -1035,7 +1035,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* transceiverInit = argsMap[@"transceiverInit"];
     NSString* trackId = argsMap[@"trackId"];
     NSString* mediaType = argsMap[@"mediaType"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1043,12 +1043,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpTransceiver* transceiver = nil;
+    LKRTCRtpTransceiver* transceiver = nil;
     BOOL hasAudio = NO;
     if (trackId != nil) {
-      RTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
+      LKRTCMediaStreamTrack* track = [self trackForId:trackId peerConnectionId:nil];
       if (transceiverInit != nil) {
-        RTCRtpTransceiverInit* init = [self mapToTransceiverInit:transceiverInit];
+        LKRTCRtpTransceiverInit* init = [self mapToTransceiverInit:transceiverInit];
         transceiver = [peerConnection addTransceiverWithTrack:track init:init];
       } else {
         transceiver = [peerConnection addTransceiverWithTrack:track];
@@ -1059,7 +1059,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     } else if (mediaType != nil) {
       RTCRtpMediaType rtpMediaType = [self stringToRtpMediaType:mediaType];
       if (transceiverInit != nil) {
-        RTCRtpTransceiverInit* init = [self mapToTransceiverInit:transceiverInit];
+        LKRTCRtpTransceiverInit* init = [self mapToTransceiverInit:transceiverInit];
         transceiver = [peerConnection addTransceiverOfType:(rtpMediaType) init:init];
       } else {
         transceiver = [peerConnection addTransceiverOfType:rtpMediaType];
@@ -1088,7 +1088,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* direction = argsMap[@"direction"];
     NSString* transceiverId = argsMap[@"transceiverId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1096,7 +1096,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
+    LKRTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
     if (transcevier == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1111,7 +1111,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* transceiverId = argsMap[@"transceiverId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1119,7 +1119,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
+    LKRTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
     if (transcevier == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1142,7 +1142,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* transceiverId = argsMap[@"transceiverId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1150,7 +1150,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
+    LKRTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
     if (transcevier == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1165,7 +1165,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* senderId = argsMap[@"rtpSenderId"];
     NSDictionary* parameters = argsMap[@"parameters"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1173,7 +1173,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
+    LKRTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
     if (sender == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: sender not found!"]
@@ -1188,7 +1188,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* senderId = argsMap[@"rtpSenderId"];
     NSString* trackId = argsMap[@"trackId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1196,14 +1196,14 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
+    LKRTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
     if (sender == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: sender not found!"]
                                  details:nil]);
       return;
     }
-    RTCMediaStreamTrack* track = nil;
+    LKRTCMediaStreamTrack* track = nil;
     if ([trackId length] > 0) {
       track = [self trackForId:trackId peerConnectionId:nil];
       if (track == nil) {
@@ -1220,7 +1220,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* senderId = argsMap[@"rtpSenderId"];
     NSString* trackId = argsMap[@"trackId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1228,14 +1228,14 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
+    LKRTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
     if (sender == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: sender not found!"]
                                  details:nil]);
       return;
     }
-    RTCMediaStreamTrack* track = nil;
+    LKRTCMediaStreamTrack* track = nil;
     if ([trackId length] > 0) {
       track = [self trackForId:trackId peerConnectionId:nil];
       if (track == nil) {
@@ -1252,7 +1252,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
     NSString* senderId = argsMap[@"rtpSenderId"];
     NSArray* streamIds = argsMap[@"streamIds"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1260,7 +1260,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 details:nil]);
       return;
     }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
+    LKRTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
     if (sender == nil) {
       result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                                  message:[NSString stringWithFormat:@"Error: sender not found!"]
@@ -1272,7 +1272,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getSenders" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1282,7 +1282,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     }
 
     NSMutableArray* senders = [NSMutableArray array];
-    for (RTCRtpSender* sender in peerConnection.senders) {
+    for (LKRTCRtpSender* sender in peerConnection.senders) {
       [senders addObject:[self rtpSenderToMap:sender]];
     }
 
@@ -1290,7 +1290,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getReceivers" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1300,7 +1300,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     }
 
     NSMutableArray* receivers = [NSMutableArray array];
-    for (RTCRtpReceiver* receiver in peerConnection.receivers) {
+    for (LKRTCRtpReceiver* receiver in peerConnection.receivers) {
       [receivers addObject:[self receiverToMap:receiver]];
     }
 
@@ -1308,7 +1308,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getTransceivers" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection == nil) {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
@@ -1318,7 +1318,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     }
 
     NSMutableArray* transceivers = [NSMutableArray array];
-    for (RTCRtpTransceiver* transceiver in peerConnection.transceivers) {
+    for (LKRTCRtpTransceiver* transceiver in peerConnection.transceivers) {
       [transceivers addObject:[self transceiverToMap:transceiver]];
     }
 
@@ -1344,7 +1344,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getSignalingState" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       result(@{@"state" : [self stringForSignalingState:peerConnection.signalingState]});
     } else {
@@ -1356,7 +1356,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getIceGatheringState" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       result(@{@"state" : [self stringForICEGatheringState:peerConnection.iceGatheringState]});
     } else {
@@ -1368,7 +1368,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getIceConnectionState" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       result(@{@"state" : [self stringForICEConnectionState:peerConnection.iceConnectionState]});
     } else {
@@ -1380,7 +1380,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   } else if ([@"getConnectionState" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       result(@{@"state" : [self stringForPeerConnectionState:peerConnection.connectionState]});
     } else {
@@ -1401,7 +1401,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   _localStreams = nil;
 
   for (NSString* peerConnectionId in _peerConnections) {
-    RTCPeerConnection* peerConnection = _peerConnections[peerConnectionId];
+    LKRTCPeerConnection* peerConnection = _peerConnections[peerConnectionId];
     peerConnection.delegate = nil;
     [peerConnection close];
   }
@@ -1411,7 +1411,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
 
 - (BOOL)hasLocalAudioTrack {
   for (id key in _localTracks.allKeys) {
-    RTCMediaStreamTrack* track = [_localTracks objectForKey:key];
+    LKRTCMediaStreamTrack* track = [_localTracks objectForKey:key];
     if ([track.kind isEqualToString:@"audio"]) {
       return YES;
     }
@@ -1434,12 +1434,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
 }
 
 - (void)mediaStreamGetTracks:(NSString*)streamId result:(FlutterResult)result {
-  RTCMediaStream* stream = [self streamForId:streamId peerConnectionId:@""];
+  LKRTCMediaStream* stream = [self streamForId:streamId peerConnectionId:@""];
   if (stream) {
     NSMutableArray* audioTracks = [NSMutableArray array];
     NSMutableArray* videoTracks = [NSMutableArray array];
 
-    for (RTCMediaStreamTrack* track in stream.audioTracks) {
+    for (LKRTCMediaStreamTrack* track in stream.audioTracks) {
       NSString* trackId = track.trackId;
       [self.localTracks setObject:track forKey:trackId];
       [audioTracks addObject:@{
@@ -1452,7 +1452,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       }];
     }
 
-    for (RTCMediaStreamTrack* track in stream.videoTracks) {
+    for (LKRTCMediaStreamTrack* track in stream.videoTracks) {
       NSString* trackId = track.trackId;
       [_localTracks setObject:track forKey:trackId];
       [videoTracks addObject:@{
@@ -1471,13 +1471,13 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 }
 
-- (RTCMediaStream*)streamForId:(NSString*)streamId peerConnectionId:(NSString*)peerConnectionId {
-  RTCMediaStream* stream = nil;
+- (LKRTCMediaStream*)streamForId:(NSString*)streamId peerConnectionId:(NSString*)peerConnectionId {
+  LKRTCMediaStream* stream = nil;
   if (peerConnectionId.length > 0) {
-    RTCPeerConnection* peerConnection = [_peerConnections objectForKey:peerConnectionId];
+    LKRTCPeerConnection* peerConnection = [_peerConnections objectForKey:peerConnectionId];
     stream = peerConnection.remoteStreams[streamId];
   } else {
-    for (RTCPeerConnection* peerConnection in _peerConnections.allValues) {
+    for (LKRTCPeerConnection* peerConnection in _peerConnections.allValues) {
       stream = peerConnection.remoteStreams[streamId];
       if (stream) {
         break;
@@ -1490,17 +1490,17 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return stream;
 }
 
-- (RTCMediaStreamTrack*)trackForId:(NSString*)trackId peerConnectionId:(NSString*)peerConnectionId {
-  RTCMediaStreamTrack* track = _localTracks[trackId];
+- (LKRTCMediaStreamTrack*)trackForId:(NSString*)trackId peerConnectionId:(NSString*)peerConnectionId {
+  LKRTCMediaStreamTrack* track = _localTracks[trackId];
   if (!track) {
     for (NSString* currentId in _peerConnections.allKeys) {
       if (peerConnectionId && [currentId isEqualToString:peerConnectionId] == false) {
         continue;
       }
-      RTCPeerConnection* peerConnection = _peerConnections[currentId];
+      LKRTCPeerConnection* peerConnection = _peerConnections[currentId];
       track = peerConnection.remoteTracks[trackId];
       if (!track) {
-        for (RTCRtpTransceiver* transceiver in peerConnection.transceivers) {
+        for (LKRTCRtpTransceiver* transceiver in peerConnection.transceivers) {
           if (transceiver.receiver.track != nil &&
               [transceiver.receiver.track.trackId isEqual:trackId]) {
             track = transceiver.receiver.track;
@@ -1516,7 +1516,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return track;
 }
 
-- (RTCIceServer*)RTCIceServer:(id)json {
+- (LKRTCIceServer*)LKRTCIceServer:(id)json {
   if (!json) {
     NSLog(@"a valid iceServer value");
     return nil;
@@ -1538,16 +1538,16 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   if (json[@"username"] != nil || json[@"credential"] != nil) {
-    return [[RTCIceServer alloc] initWithURLStrings:urls
+    return [[LKRTCIceServer alloc] initWithURLStrings:urls
                                            username:json[@"username"]
                                          credential:json[@"credential"]];
   }
 
-  return [[RTCIceServer alloc] initWithURLStrings:urls];
+  return [[LKRTCIceServer alloc] initWithURLStrings:urls];
 }
 
-- (nonnull RTCConfiguration*)RTCConfiguration:(id)json {
-  RTCConfiguration* config = [[RTCConfiguration alloc] init];
+- (nonnull LKRTCConfiguration*)LKRTCConfiguration:(id)json {
+  LKRTCConfiguration* config = [[LKRTCConfiguration alloc] init];
 
   if (!json) {
     return config;
@@ -1586,9 +1586,9 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   if (json[@"iceServers"] != nil && [json[@"iceServers"] isKindOfClass:[NSArray class]]) {
-    NSMutableArray<RTCIceServer*>* iceServers = [NSMutableArray new];
+    NSMutableArray<LKRTCIceServer*>* iceServers = [NSMutableArray new];
     for (id server in json[@"iceServers"]) {
-      RTCIceServer* convert = [self RTCIceServer:server];
+      LKRTCIceServer* convert = [self LKRTCIceServer:server];
       if (convert != nil) {
         [iceServers addObject:convert];
       }
@@ -1750,7 +1750,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       srtpEnableAes128Sha1_32CryptoCipher = [value boolValue];
     }
 
-    config.cryptoOptions = [[RTCCryptoOptions alloc]
+    config.cryptoOptions = [[LKRTCCryptoOptions alloc]
              initWithSrtpEnableGcmCryptoSuites:srtpEnableGcmCryptoSuites
            srtpEnableAes128Sha1_32CryptoCipher:srtpEnableAes128Sha1_32CryptoCipher
         srtpEnableEncryptedRtpHeaderExtensions:srtpEnableEncryptedRtpHeaderExtensions
@@ -1760,12 +1760,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return config;
 }
 
-- (RTCDataChannelConfiguration*)RTCDataChannelConfiguration:(id)json {
+- (LKRTCDataChannelConfiguration*)RTCDataChannelConfiguration:(id)json {
   if (!json) {
     return nil;
   }
   if ([json isKindOfClass:[NSDictionary class]]) {
-    RTCDataChannelConfiguration* init = [RTCDataChannelConfiguration new];
+    LKRTCDataChannelConfiguration* init = [LKRTCDataChannelConfiguration new];
 
     if (json[@"id"]) {
       [init setChannelId:(int)[json[@"id"] integerValue]];
@@ -1793,7 +1793,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
       [[rect valueForKey:@"width"] doubleValue], [[rect valueForKey:@"height"] doubleValue]);
 }
 
-- (NSDictionary*)dtmfSenderToMap:(id<RTCDtmfSender>)dtmf Id:(NSString*)Id {
+- (NSDictionary*)dtmfSenderToMap:(id<LKRTCDtmfSender>)dtmf Id:(NSString*)Id {
   return @{
     @"dtmfSenderId" : Id,
     @"interToneGap" : @(dtmf.interToneGap / 1000.0),
@@ -1801,14 +1801,14 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   };
 }
 
-- (NSDictionary*)rtpParametersToMap:(RTCRtpParameters*)parameters {
+- (NSDictionary*)rtpParametersToMap:(LKRTCRtpParameters*)parameters {
   NSDictionary* rtcp = @{
     @"cname" : parameters.rtcp.cname,
     @"reducedSize" : @(parameters.rtcp.isReducedSize),
   };
 
   NSMutableArray* headerExtensions = [NSMutableArray array];
-  for (RTCRtpHeaderExtension* headerExtension in parameters.headerExtensions) {
+  for (LKRTCRtpHeaderExtension* headerExtension in parameters.headerExtensions) {
     [headerExtensions addObject:@{
       @"uri" : headerExtension.uri,
       @"encrypted" : @(headerExtension.encrypted),
@@ -1817,7 +1817,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   NSMutableArray* encodings = [NSMutableArray array];
-  for (RTCRtpEncodingParameters* encoding in parameters.encodings) {
+  for (LKRTCRtpEncodingParameters* encoding in parameters.encodings) {
     // non-nil values
     NSMutableDictionary* obj = [@{@"active" : @(encoding.isActive)} mutableCopy];
     // optional values
@@ -1840,7 +1840,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   NSMutableArray* codecs = [NSMutableArray array];
-  for (RTCRtpCodecParameters* codec in parameters.codecs) {
+  for (LKRTCRtpCodecParameters* codec in parameters.codecs) {
     [codecs addObject:@{
       @"name" : codec.name,
       @"payloadType" : @(codec.payloadType),
@@ -1886,15 +1886,15 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return @"";
 }
 
-- (NSDictionary*)mediaStreamToMap:(RTCMediaStream*)stream ownerTag:(NSString*)ownerTag {
+- (NSDictionary*)mediaStreamToMap:(LKRTCMediaStream*)stream ownerTag:(NSString*)ownerTag {
   NSMutableArray* audioTracks = [NSMutableArray array];
   NSMutableArray* videoTracks = [NSMutableArray array];
 
-  for (RTCMediaStreamTrack* track in stream.audioTracks) {
+  for (LKRTCMediaStreamTrack* track in stream.audioTracks) {
     [audioTracks addObject:[self mediaTrackToMap:track]];
   }
 
-  for (RTCMediaStreamTrack* track in stream.videoTracks) {
+  for (LKRTCMediaStreamTrack* track in stream.videoTracks) {
     [videoTracks addObject:[self mediaTrackToMap:track]];
   }
 
@@ -1907,7 +1907,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   };
 }
 
-- (NSDictionary*)mediaTrackToMap:(RTCMediaStreamTrack*)track {
+- (NSDictionary*)mediaTrackToMap:(LKRTCMediaStreamTrack*)track {
   if (track == nil)
     return @{};
   NSDictionary* params = @{
@@ -1921,7 +1921,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return params;
 }
 
-- (NSDictionary*)rtpSenderToMap:(RTCRtpSender*)sender {
+- (NSDictionary*)rtpSenderToMap:(LKRTCRtpSender*)sender {
   NSDictionary* params = @{
     @"senderId" : sender.senderId,
     @"ownsTrack" : @(YES),
@@ -1932,7 +1932,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return params;
 }
 
-- (NSDictionary*)receiverToMap:(RTCRtpReceiver*)receiver {
+- (NSDictionary*)receiverToMap:(LKRTCRtpReceiver*)receiver {
   NSDictionary* params = @{
     @"receiverId" : receiver.receiverId,
     @"rtpParameters" : [self rtpParametersToMap:receiver.parameters],
@@ -1941,8 +1941,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return params;
 }
 
-- (RTCRtpTransceiver*)getRtpTransceiverById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id {
-  for (RTCRtpTransceiver* transceiver in peerConnection.transceivers) {
+- (LKRTCRtpTransceiver*)getRtpTransceiverById:(LKRTCPeerConnection*)peerConnection Id:(NSString*)Id {
+  for (LKRTCRtpTransceiver* transceiver in peerConnection.transceivers) {
       NSString *mid = transceiver.mid ? transceiver.mid : @"";
     if ([mid isEqualToString:Id]) {
       return transceiver;
@@ -1951,8 +1951,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return nil;
 }
 
-- (RTCRtpSender*)getRtpSenderById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id {
-  for (RTCRtpSender* sender in peerConnection.senders) {
+- (LKRTCRtpSender*)getRtpSenderById:(LKRTCPeerConnection*)peerConnection Id:(NSString*)Id {
+  for (LKRTCRtpSender* sender in peerConnection.senders) {
     if ([sender.senderId isEqualToString:Id]) {
       return sender;
     }
@@ -1960,8 +1960,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return nil;
 }
 
-- (RTCRtpReceiver*)getRtpReceiverById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id {
-  for (RTCRtpReceiver* receiver in peerConnection.receivers) {
+- (LKRTCRtpReceiver*)getRtpReceiverById:(LKRTCPeerConnection*)peerConnection Id:(NSString*)Id {
+  for (LKRTCRtpReceiver* receiver in peerConnection.receivers) {
     if ([receiver.receiverId isEqualToString:Id]) {
       return receiver;
     }
@@ -1969,8 +1969,8 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return nil;
 }
 
-- (RTCRtpEncodingParameters*)mapToEncoding:(NSDictionary*)map {
-  RTCRtpEncodingParameters* encoding = [[RTCRtpEncodingParameters alloc] init];
+- (LKRTCRtpEncodingParameters*)mapToEncoding:(NSDictionary*)map {
+  LKRTCRtpEncodingParameters* encoding = [[LKRTCRtpEncodingParameters alloc] init];
   encoding.isActive = YES;
   encoding.scaleResolutionDownBy = [NSNumber numberWithDouble:1.0];
   encoding.numTemporalLayers = [NSNumber numberWithInt:1];
@@ -2011,12 +2011,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return encoding;
 }
 
-- (RTCRtpTransceiverInit*)mapToTransceiverInit:(NSDictionary*)map {
+- (LKRTCRtpTransceiverInit*)mapToTransceiverInit:(NSDictionary*)map {
   NSArray<NSString*>* streamIds = map[@"streamIds"];
   NSArray<NSDictionary*>* encodingsParams = map[@"sendEncodings"];
   NSString* direction = map[@"direction"];
 
-  RTCRtpTransceiverInit* init = [RTCRtpTransceiverInit alloc];
+  LKRTCRtpTransceiverInit* init = [LKRTCRtpTransceiverInit alloc];
 
   if (direction != nil) {
     init.direction = [self stringToTransceiverDirection:direction];
@@ -2027,7 +2027,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   if (encodingsParams != nil) {
-    NSMutableArray<RTCRtpEncodingParameters*>* sendEncodings = [[NSMutableArray alloc] init];
+    NSMutableArray<LKRTCRtpEncodingParameters*>* sendEncodings = [[NSMutableArray alloc] init];
     for (NSDictionary* map in encodingsParams) {
       [sendEncodings addObject:[self mapToEncoding:map]];
     }
@@ -2060,10 +2060,10 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return RTCRtpTransceiverDirectionInactive;
 }
 
-- (RTCRtpParameters*)updateRtpParameters:(RTCRtpParameters*)parameters
+- (LKRTCRtpParameters*)updateRtpParameters:(LKRTCRtpParameters*)parameters
                                     with:(NSDictionary*)newParameters {
   // current encodings
-  NSArray<RTCRtpEncodingParameters*>* currentEncodings = parameters.encodings;
+  NSArray<LKRTCRtpEncodingParameters*>* currentEncodings = parameters.encodings;
   // new encodings
   NSArray* newEncodings = [newParameters objectForKey:@"encodings"];
     
@@ -2082,7 +2082,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   }
 
   for (int i = 0; i < [newEncodings count]; i++) {
-    RTCRtpEncodingParameters* currentParams = nil;
+    LKRTCRtpEncodingParameters* currentParams = nil;
     NSDictionary* newParams = [newEncodings objectAtIndex:i];
     NSString* rid = [newParams objectForKey:@"rid"];
 
@@ -2090,7 +2090,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     if ([rid isKindOfClass:[NSString class]] && [rid length] != 0) {
       // try to find current encoding with same rid
       NSUInteger result =
-          [currentEncodings indexOfObjectPassingTest:^BOOL(RTCRtpEncodingParameters* _Nonnull obj,
+          [currentEncodings indexOfObjectPassingTest:^BOOL(LKRTCRtpEncodingParameters* _Nonnull obj,
                                                            NSUInteger idx, BOOL* _Nonnull stop) {
             // stop if found object with matching rid
             return (*stop = ([rid isEqualToString:obj.rid]));
@@ -2149,7 +2149,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
   return nil;
 }
 
-- (NSDictionary*)transceiverToMap:(RTCRtpTransceiver*)transceiver {
+- (NSDictionary*)transceiverToMap:(LKRTCRtpTransceiver*)transceiver {
   NSString* mid = transceiver.mid ? transceiver.mid : @"";
   NSDictionary* params = @{
     @"transceiverId" : mid,
