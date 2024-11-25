@@ -2,7 +2,7 @@
 
 @implementation FlutterRTCVideoPlatformView {
     CGSize _videoSize;
-    RTCMTLVideoView *_videoView;
+    LKRTCMTLVideoView *_videoView;
 }
 
 @synthesize videoRenderer = _videoRenderer;
