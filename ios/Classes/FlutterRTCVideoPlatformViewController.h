@@ -4,15 +4,15 @@
 #import <FlutterMacOS/FlutterMacOS.h>
 #endif
 
-#import <WebRTC/WebRTC.h>
+#import <LiveKitWebRTC/LiveKitWebRTC.h>
 
 @interface FlutterRTCVideoPlatformViewController
-    : NSObject <FlutterPlatformView, FlutterStreamHandler, RTCVideoRenderer>
+    : NSObject <FlutterPlatformView, FlutterStreamHandler, LKRTCVideoRenderer>
 
 @property(nonatomic, strong) NSObject<FlutterBinaryMessenger>* _Nonnull messenger;
 @property(nonatomic, strong) FlutterEventSink _Nonnull eventSink;
 @property(nonatomic) int64_t viewId;
-@property(nonatomic, strong) RTCVideoTrack* _Nullable videoTrack;
+@property(nonatomic, strong) LKRTCVideoTrack* _Nullable videoTrack;
 
 - (instancetype _Nullable)initWithMessenger:(NSObject<FlutterBinaryMessenger>* _Nonnull)messenger
                              viewIdentifier:(int64_t)viewId

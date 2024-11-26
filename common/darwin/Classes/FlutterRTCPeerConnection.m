@@ -4,9 +4,9 @@
 #import "FlutterRTCDataChannel.h"
 #import "FlutterWebRTCPlugin.h"
 
-#import <WebRTC/WebRTC.h>
+#import <LiveKitWebRTC/LiveKitWebRTC.h>
 
-@implementation RTCPeerConnection (Flutter)
+@implementation LKRTCPeerConnection (Flutter)
 
 @dynamic eventSink;
 
@@ -37,29 +37,29 @@
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (NSMutableDictionary<NSString*, RTCDataChannel*>*)dataChannels {
+- (NSMutableDictionary<NSString*, LKRTCDataChannel*>*)dataChannels {
   return objc_getAssociatedObject(self, _cmd);
 }
 
-- (void)setDataChannels:(NSMutableDictionary<NSString*, RTCDataChannel*>*)dataChannels {
+- (void)setDataChannels:(NSMutableDictionary<NSString*, LKRTCDataChannel*>*)dataChannels {
   objc_setAssociatedObject(self, @selector(dataChannels), dataChannels,
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (NSMutableDictionary<NSString*, RTCMediaStream*>*)remoteStreams {
+- (NSMutableDictionary<NSString*, LKRTCMediaStream*>*)remoteStreams {
   return objc_getAssociatedObject(self, _cmd);
 }
 
-- (void)setRemoteStreams:(NSMutableDictionary<NSString*, RTCMediaStream*>*)remoteStreams {
+- (void)setRemoteStreams:(NSMutableDictionary<NSString*, LKRTCMediaStream*>*)remoteStreams {
   objc_setAssociatedObject(self, @selector(remoteStreams), remoteStreams,
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (NSMutableDictionary<NSString*, RTCMediaStreamTrack*>*)remoteTracks {
+- (NSMutableDictionary<NSString*, LKRTCMediaStreamTrack*>*)remoteTracks {
   return objc_getAssociatedObject(self, _cmd);
 }
 
-- (void)setRemoteTracks:(NSMutableDictionary<NSString*, RTCMediaStreamTrack*>*)remoteTracks {
+- (void)setRemoteTracks:(NSMutableDictionary<NSString*, LKRTCMediaStreamTrack*>*)remoteTracks {
   objc_setAssociatedObject(self, @selector(remoteTracks), remoteTracks,
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
@@ -79,51 +79,51 @@
 
 @end
 
-@implementation FlutterWebRTCPlugin (RTCPeerConnection)
+@implementation FlutterWebRTCPlugin (LKRTCPeerConnection)
 
-- (void)peerConnectionSetConfiguration:(RTCConfiguration*)configuration
-                        peerConnection:(RTCPeerConnection*)peerConnection {
+- (void)peerConnectionSetConfiguration:(LKRTCConfiguration*)configuration
+                        peerConnection:(LKRTCPeerConnection*)peerConnection {
   [peerConnection setConfiguration:configuration];
 }
 
 - (void)peerConnectionCreateOffer:(NSDictionary*)constraints
-                   peerConnection:(RTCPeerConnection*)peerConnection
+                   peerConnection:(LKRTCPeerConnection*)peerConnection
                            result:(FlutterResult)result {
   [peerConnection
       offerForConstraints:[self parseMediaConstraints:constraints]
-        completionHandler:^(RTCSessionDescription* sdp, NSError* error) {
+        completionHandler:^(LKRTCSessionDescription* sdp, NSError* error) {
           if (error) {
             result([FlutterError
                 errorWithCode:@"CreateOfferFailed"
                       message:[NSString stringWithFormat:@"Error %@", error.userInfo[@"error"]]
                       details:nil]);
           } else {
-            NSString* type = [RTCSessionDescription stringForType:sdp.type];
+            NSString* type = [LKRTCSessionDescription stringForType:sdp.type];
             result(@{@"sdp" : sdp.sdp, @"type" : type});
           }
         }];
 }
 
 - (void)peerConnectionCreateAnswer:(NSDictionary*)constraints
-                    peerConnection:(RTCPeerConnection*)peerConnection
+                    peerConnection:(LKRTCPeerConnection*)peerConnection
                             result:(FlutterResult)result {
   [peerConnection
       answerForConstraints:[self parseMediaConstraints:constraints]
-         completionHandler:^(RTCSessionDescription* sdp, NSError* error) {
+         completionHandler:^(LKRTCSessionDescription* sdp, NSError* error) {
            if (error) {
              result([FlutterError
                  errorWithCode:@"CreateAnswerFailed"
                        message:[NSString stringWithFormat:@"Error %@", error.userInfo[@"error"]]
                        details:nil]);
            } else {
-             NSString* type = [RTCSessionDescription stringForType:sdp.type];
+             NSString* type = [LKRTCSessionDescription stringForType:sdp.type];
              result(@{@"sdp" : sdp.sdp, @"type" : type});
            }
          }];
 }
 
-- (void)peerConnectionSetLocalDescription:(RTCSessionDescription*)sdp
-                           peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnectionSetLocalDescription:(LKRTCSessionDescription*)sdp
+                           peerConnection:(LKRTCPeerConnection*)peerConnection
                                    result:(FlutterResult)result {
   [peerConnection
       setLocalDescription:sdp
@@ -139,8 +139,8 @@
         }];
 }
 
-- (void)peerConnectionSetRemoteDescription:(RTCSessionDescription*)sdp
-                            peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnectionSetRemoteDescription:(LKRTCSessionDescription*)sdp
+                            peerConnection:(LKRTCPeerConnection*)peerConnection
                                     result:(FlutterResult)result {
   [peerConnection
       setRemoteDescription:sdp
@@ -156,8 +156,8 @@
          }];
 }
 
-- (void)peerConnectionAddICECandidate:(RTCIceCandidate*)candidate
-                       peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnectionAddICECandidate:(LKRTCIceCandidate*)candidate
+                       peerConnection:(LKRTCPeerConnection*)peerConnection
                                result:(FlutterResult)result {
   [peerConnection
         addIceCandidate:candidate
@@ -173,7 +173,7 @@
       }];
 }
 
-- (void)peerConnectionClose:(RTCPeerConnection*)peerConnection {
+- (void)peerConnectionClose:(LKRTCPeerConnection*)peerConnection {
   [peerConnection close];
 
   // Clean up peerConnection's streams and tracks
@@ -181,28 +181,28 @@
   [peerConnection.remoteTracks removeAllObjects];
 
   // Clean up peerConnection's dataChannels.
-  NSMutableDictionary<NSString*, RTCDataChannel*>* dataChannels = peerConnection.dataChannels;
+  NSMutableDictionary<NSString*, LKRTCDataChannel*>* dataChannels = peerConnection.dataChannels;
   for (NSString* dataChannelId in dataChannels) {
     dataChannels[dataChannelId].delegate = nil;
-    // There is no need to close the RTCDataChannel because it is owned by the
-    // RTCPeerConnection and the latter will close the former.
+    // There is no need to close the LKRTCDataChannel because it is owned by the
+    // LKRTCPeerConnection and the latter will close the former.
   }
   [dataChannels removeAllObjects];
 }
 
 - (void)peerConnectionGetStatsForTrackId:(nonnull NSString*)trackID
-                          peerConnection:(nonnull RTCPeerConnection*)peerConnection
+                          peerConnection:(nonnull LKRTCPeerConnection*)peerConnection
                                   result:(nonnull FlutterResult)result {
-  RTCRtpSender* sender = nil;
-  RTCRtpReceiver* receiver = nil;
+  LKRTCRtpSender* sender = nil;
+  LKRTCRtpReceiver* receiver = nil;
 
-  for (RTCRtpSender* s in peerConnection.senders) {
+  for (LKRTCRtpSender* s in peerConnection.senders) {
     if (s.track != nil && [s.track.trackId isEqualToString:trackID]) {
       sender = s;
     }
   }
 
-  for (RTCRtpReceiver* r in peerConnection.receivers) {
+  for (LKRTCRtpReceiver* r in peerConnection.receivers) {
     if (r.track != nil && [r.track.trackId isEqualToString:trackID]) {
       receiver = r;
     }
@@ -210,10 +210,10 @@
 
   if (sender != nil) {
     [peerConnection statisticsForSender:sender
-                      completionHandler:^(RTCStatisticsReport* statsReport) {
+                      completionHandler:^(LKRTCStatisticsReport* statsReport) {
                         NSMutableArray* stats = [NSMutableArray array];
                         for (id key in statsReport.statistics) {
-                          RTCStatistics* report = [statsReport.statistics objectForKey:key];
+                          LKRTCStatistics* report = [statsReport.statistics objectForKey:key];
                           [stats addObject:@{
                             @"id" : report.id,
                             @"type" : report.type,
@@ -225,10 +225,10 @@
                       }];
   } else if (receiver != nil) {
     [peerConnection statisticsForReceiver:receiver
-                        completionHandler:^(RTCStatisticsReport* statsReport) {
+                        completionHandler:^(LKRTCStatisticsReport* statsReport) {
                           NSMutableArray* stats = [NSMutableArray array];
                           for (id key in statsReport.statistics) {
-                            RTCStatistics* report = [statsReport.statistics objectForKey:key];
+                            LKRTCStatistics* report = [statsReport.statistics objectForKey:key];
                             [stats addObject:@{
                               @"id" : report.id,
                               @"type" : report.type,
@@ -245,12 +245,12 @@
   }
 }
 
-- (void)peerConnectionGetStats:(nonnull RTCPeerConnection*)peerConnection
+- (void)peerConnectionGetStats:(nonnull LKRTCPeerConnection*)peerConnection
                         result:(nonnull FlutterResult)result {
-  [peerConnection statisticsWithCompletionHandler:^(RTCStatisticsReport* statsReport) {
+  [peerConnection statisticsWithCompletionHandler:^(LKRTCStatisticsReport* statsReport) {
     NSMutableArray* stats = [NSMutableArray array];
     for (id key in statsReport.statistics) {
-      RTCStatistics* report = [statsReport.statistics objectForKey:key];
+      LKRTCStatistics* report = [statsReport.statistics objectForKey:key];
       [stats addObject:@{
         @"id" : report.id,
         @"type" : report.type,
@@ -335,13 +335,13 @@
 /**
  * Parses the constraint keys and values of a specific JavaScript object into
  * a specific <tt>NSMutableDictionary</tt> in a format suitable for the
- * initialization of a <tt>RTCMediaConstraints</tt> instance.
+ * initialization of a <tt>LKRTCMediaConstraints</tt> instance.
  *
  * @param src The JavaScript object which defines constraint keys and values and
  * which is to be parsed into the specified <tt>dst</tt>.
  * @param dst The <tt>NSMutableDictionary</tt> into which the constraint keys
  * and values defined by <tt>src</tt> are to be written in a format suitable for
- * the initialization of a <tt>RTCMediaConstraints</tt> instance.
+ * the initialization of a <tt>LKRTCMediaConstraints</tt> instance.
  */
 - (void)parseJavaScriptConstraints:(NSDictionary*)src
              intoWebRTCConstraints:(NSMutableDictionary<NSString*, NSString*>*)dst {
@@ -359,15 +359,15 @@
 }
 
 /**
- * Parses a JavaScript object into a new <tt>RTCMediaConstraints</tt> instance.
+ * Parses a JavaScript object into a new <tt>LKRTCMediaConstraints</tt> instance.
  *
  * @param constraints The JavaScript object to parse into a new
- * <tt>RTCMediaConstraints</tt> instance.
- * @returns A new <tt>RTCMediaConstraints</tt> instance initialized with the
+ * <tt>LKRTCMediaConstraints</tt> instance.
+ * @returns A new <tt>LKRTCMediaConstraints</tt> instance initialized with the
  * mandatory and optional constraint keys and values specified by
  * <tt>constraints</tt>.
  */
-- (RTCMediaConstraints*)parseMediaConstraints:(NSDictionary*)constraints {
+- (LKRTCMediaConstraints*)parseMediaConstraints:(NSDictionary*)constraints {
   id mandatory = constraints[@"mandatory"];
   NSMutableDictionary<NSString*, NSString*>* mandatory_ = [NSMutableDictionary new];
 
@@ -386,14 +386,14 @@
     }
   }
 
-  return [[RTCMediaConstraints alloc] initWithMandatoryConstraints:mandatory_
+  return [[LKRTCMediaConstraints alloc] initWithMandatoryConstraints:mandatory_
                                                optionalConstraints:optional_];
 }
 
 #pragma mark - RTCPeerConnectionDelegate methods
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
     didChangeSignalingState:(RTCSignalingState)newState {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
@@ -401,9 +401,9 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-           mediaStream:(RTCMediaStream*)stream
-           didAddTrack:(RTCVideoTrack*)track {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+           mediaStream:(LKRTCMediaStream*)stream
+           didAddTrack:(LKRTCVideoTrack*)track {
   peerConnection.remoteTracks[track.trackId] = track;
   NSString* streamId = stream.streamId;
   peerConnection.remoteStreams[streamId] = stream;
@@ -426,9 +426,9 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-           mediaStream:(RTCMediaStream*)stream
-        didRemoveTrack:(RTCVideoTrack*)track {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+           mediaStream:(LKRTCMediaStream*)stream
+        didRemoveTrack:(LKRTCVideoTrack*)track {
   [peerConnection.remoteTracks removeObjectForKey:track.trackId];
   NSString* streamId = stream.streamId;
   FlutterEventSink eventSink = peerConnection.eventSink;
@@ -449,12 +449,12 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection didAddStream:(RTCMediaStream*)stream {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection didAddStream:(LKRTCMediaStream*)stream {
   NSMutableArray* audioTracks = [NSMutableArray array];
   NSMutableArray* videoTracks = [NSMutableArray array];
 
   BOOL hasAudio = NO;
-  for (RTCAudioTrack* track in stream.audioTracks) {
+  for (LKRTCAudioTrack* track in stream.audioTracks) {
     peerConnection.remoteTracks[track.trackId] = track;
     [audioTracks addObject:@{
       @"id" : track.trackId,
@@ -467,7 +467,7 @@
     hasAudio = YES;
   }
 
-  for (RTCVideoTrack* track in stream.videoTracks) {
+  for (LKRTCVideoTrack* track in stream.videoTracks) {
     peerConnection.remoteTracks[track.trackId] = track;
     [videoTracks addObject:@{
       @"id" : track.trackId,
@@ -497,7 +497,7 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection didRemoveStream:(RTCMediaStream*)stream {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection didRemoveStream:(LKRTCMediaStream*)stream {
   NSArray* keysArray = [peerConnection.remoteStreams allKeysForObject:stream];
   // We assume there can be only one object for 1 key
   if (keysArray.count > 1) {
@@ -506,10 +506,10 @@
   }
   NSString* streamId = stream.streamId;
 
-  for (RTCVideoTrack* track in stream.videoTracks) {
+  for (LKRTCVideoTrack* track in stream.videoTracks) {
     [peerConnection.remoteTracks removeObjectForKey:track.trackId];
   }
-  for (RTCAudioTrack* track in stream.audioTracks) {
+  for (LKRTCAudioTrack* track in stream.audioTracks) {
     [peerConnection.remoteTracks removeObjectForKey:track.trackId];
   }
 
@@ -522,7 +522,7 @@
   }
 }
 
-- (void)peerConnectionShouldNegotiate:(RTCPeerConnection*)peerConnection {
+- (void)peerConnectionShouldNegotiate:(LKRTCPeerConnection*)peerConnection {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
     postEvent(eventSink, @{
@@ -531,7 +531,7 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
     didChangeIceConnectionState:(RTCIceConnectionState)newState {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
@@ -542,7 +542,7 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
     didChangeIceGatheringState:(RTCIceGatheringState)newState {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
@@ -550,8 +550,8 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-    didGenerateIceCandidate:(RTCIceCandidate*)candidate {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+    didGenerateIceCandidate:(LKRTCIceCandidate*)candidate {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
     postEvent(eventSink, @{
@@ -565,8 +565,8 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-    didOpenDataChannel:(RTCDataChannel*)dataChannel {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+    didOpenDataChannel:(LKRTCDataChannel*)dataChannel {
   if (-1 == dataChannel.channelId) {
     return;
   }
@@ -602,7 +602,7 @@
 }
 
 /** Called any time the PeerConnectionState changes. */
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
     didChangeConnectionState:(RTCPeerConnectionState)newState {
   FlutterEventSink eventSink = peerConnection.eventSink;
   if (eventSink) {
@@ -613,17 +613,17 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-    didStartReceivingOnTransceiver:(RTCRtpTransceiver*)transceiver {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+    didStartReceivingOnTransceiver:(LKRTCRtpTransceiver*)transceiver {
 }
 
 /** Called when a receiver and its track are created. */
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-        didAddReceiver:(RTCRtpReceiver*)rtpReceiver
-               streams:(NSArray<RTCMediaStream*>*)mediaStreams {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+        didAddReceiver:(LKRTCRtpReceiver*)rtpReceiver
+               streams:(NSArray<LKRTCMediaStream*>*)mediaStreams {
   // For unified-plan
   NSMutableArray* streams = [NSMutableArray array];
-  for (RTCMediaStream* stream in mediaStreams) {
+  for (LKRTCMediaStream* stream in mediaStreams) {
     [streams addObject:[self mediaStreamToMap:stream ownerTag:peerConnection.flutterId]];
   }
   FlutterEventSink eventSink = peerConnection.eventSink;
@@ -637,7 +637,7 @@
     }];
 
     if (peerConnection.configuration.sdpSemantics == RTCSdpSemanticsUnifiedPlan) {
-      for (RTCRtpTransceiver* transceiver in peerConnection.transceivers) {
+      for (LKRTCRtpTransceiver* transceiver in peerConnection.transceivers) {
         if (transceiver.receiver != nil &&
             [transceiver.receiver.receiverId isEqualToString:rtpReceiver.receiverId]) {
           [event setValue:[self transceiverToMap:transceiver] forKey:@"transceiver"];
@@ -658,14 +658,14 @@
 }
 
 /** Called when the receiver and its track are removed. */
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-     didRemoveReceiver:(RTCRtpReceiver*)rtpReceiver {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+     didRemoveReceiver:(LKRTCRtpReceiver*)rtpReceiver {
 }
 
 /** Called when the selected ICE candidate pair is changed. */
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-    didChangeLocalCandidate:(RTCIceCandidate*)local
-            remoteCandidate:(RTCIceCandidate*)remote
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+    didChangeLocalCandidate:(LKRTCIceCandidate*)local
+            remoteCandidate:(LKRTCIceCandidate*)remote
              lastReceivedMs:(int)lastDataReceivedMs
                changeReason:(NSString*)reason {
   FlutterEventSink eventSink = peerConnection.eventSink;
@@ -688,8 +688,8 @@
   }
 }
 
-- (void)peerConnection:(RTCPeerConnection*)peerConnection
-    didRemoveIceCandidates:(NSArray<RTCIceCandidate*>*)candidates {
+- (void)peerConnection:(LKRTCPeerConnection*)peerConnection
+    didRemoveIceCandidates:(NSArray<LKRTCIceCandidate*>*)candidates {
 }
 
 NSString* mediaTypeFromString(NSString* kind) {
@@ -731,10 +731,10 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
 - (void)peerConnectionGetRtpReceiverCapabilities:(nonnull NSDictionary*)argsMap
                                           result:(nonnull FlutterResult)result {
   NSString* kind = argsMap[@"kind"];
-  RTCRtpCapabilities* caps =
-    [self.peerConnectionFactory rtpReceiverCapabilitiesForKind:mediaTypeFromString(kind)];
+  LKRTCRtpCapabilities* caps =
+      [self.peerConnectionFactory rtpReceiverCapabilitiesForKind:mediaTypeFromString(kind)];
   NSMutableArray* codecsMap = [NSMutableArray array];
-  for (RTCRtpCodecCapability* c in caps.codecs) {
+  for (LKRTCRtpCodecCapability* c in caps.codecs) {
     if ([kind isEqualToString:@"audio"]) {
       [codecsMap addObject:@{
         @"channels" : c.numChannels,
@@ -760,10 +760,10 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
 - (void)peerConnectionGetRtpSenderCapabilities:(nonnull NSDictionary*)argsMap
                                         result:(nonnull FlutterResult)result {
   NSString* kind = argsMap[@"kind"];
-  RTCRtpCapabilities* caps =
+  LKRTCRtpCapabilities* caps =
       [self.peerConnectionFactory rtpSenderCapabilitiesForKind:mediaTypeFromString(kind)];
   NSMutableArray* codecsMap = [NSMutableArray array];
-  for (RTCRtpCodecCapability* c in caps.codecs) {
+  for (LKRTCRtpCodecCapability* c in caps.codecs) {
     if ([kind isEqualToString:@"audio"]) {
       [codecsMap addObject:@{
         @"channels" : c.numChannels,
@@ -789,8 +789,8 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
 -(RTC_OBJC_TYPE(RTCRtpCodecCapability) *) findCodecCapability:(NSString *)kind
                                                         codec:(NSString *)codec
                                                    parameters:(NSDictionary<NSString*, NSString*>*)parameters {
-    RTCRtpCapabilities* caps = [self.peerConnectionFactory rtpSenderCapabilitiesForKind: [kind isEqualToString:@"video"]? kRTCMediaStreamTrackKindVideo : kRTCMediaStreamTrackKindAudio];
-    for(RTCRtpCodecCapability* capCodec in caps.codecs) {
+    LKRTCRtpCapabilities* caps = [self.peerConnectionFactory rtpSenderCapabilitiesForKind: [kind isEqualToString:@"video"]? kRTCMediaStreamTrackKindVideo : kRTCMediaStreamTrackKindAudio];
+    for(LKRTCRtpCodecCapability* capCodec in caps.codecs) {
         if([capCodec.name isEqualToString:codec] && [capCodec.kind isEqualToString:kind]) {
             BOOL matched = YES;
             for(NSString* key in capCodec.parameters) {
@@ -811,7 +811,7 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
 - (void)transceiverSetCodecPreferences:(nonnull NSDictionary*)argsMap
                                 result:(nonnull FlutterResult)result {
   NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-  RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
+  LKRTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
   if (peerConnection == nil) {
     result([FlutterError
         errorWithCode:@"transceiverSetCodecPreferencesFailed"
@@ -820,7 +820,7 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
     return;
   }
   NSString* transceiverId = argsMap[@"transceiverId"];
-  RTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
+  LKRTCRtpTransceiver* transcevier = [self getRtpTransceiverById:peerConnection Id:transceiverId];
   if (transcevier == nil) {
     result([FlutterError errorWithCode:@"transceiverSetCodecPreferencesFailed"
                                message:[NSString stringWithFormat:@"Error: transcevier not found!"]
@@ -838,7 +838,7 @@ NSDictionary<NSString*, NSString*>* stringToParameters(NSString* str) {
     if (c[@"sdpFmtpLine"] != nil && ![((NSString*)c[@"sdpFmtpLine"]) isEqualToString:@""]) {
         parameters = stringToParameters((NSString*)c[@"sdpFmtpLine"]);
     }
-    RTCRtpCodecCapability * codec = [self findCodecCapability:kind codec:name parameters:parameters];
+    LKRTCRtpCodecCapability * codec = [self findCodecCapability:kind codec:name parameters:parameters];
     if(codec != nil) {
         [codecCaps addObject:codec];
     }

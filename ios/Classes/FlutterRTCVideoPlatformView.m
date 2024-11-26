@@ -33,10 +33,10 @@
 - (void)renderFrame:(nullable RTC_OBJC_TYPE(RTCVideoFrame) *)frame {
 
   CVPixelBufferRef pixelBuffer = nil;
-  if ([frame.buffer isKindOfClass:[RTCCVPixelBuffer class]]) {
-    pixelBuffer = ((RTCCVPixelBuffer*)frame.buffer).pixelBuffer;
+  if ([frame.buffer isKindOfClass:[LKRTCCVPixelBuffer class]]) {
+    pixelBuffer = ((LKRTCCVPixelBuffer*)frame.buffer).pixelBuffer;
     CFRetain(pixelBuffer);
-  } else if ([frame.buffer isKindOfClass:[RTCI420Buffer class]]) {
+  } else if ([frame.buffer isKindOfClass:[LKRTCI420Buffer class]]) {
     pixelBuffer = [self toCVPixelBuffer:frame];
   }
 
@@ -59,13 +59,13 @@
   CFRelease(pixelBuffer);
 }
 
-- (CVPixelBufferRef)toCVPixelBuffer:(RTCVideoFrame*)frame {
+- (CVPixelBufferRef)toCVPixelBuffer:(LKRTCVideoFrame*)frame {
   CVPixelBufferRef outputPixelBuffer;
   NSDictionary* pixelAttributes = @{(id)kCVPixelBufferIOSurfacePropertiesKey : @{}};
   CVPixelBufferCreate(kCFAllocatorDefault, frame.width, frame.height,
                       kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
                       (__bridge CFDictionaryRef)(pixelAttributes), &outputPixelBuffer);
-  id<RTCI420Buffer> i420Buffer = (RTCI420Buffer*)frame.buffer;
+  id<LKRTCI420Buffer> i420Buffer = (LKRTCI420Buffer*)frame.buffer;
 
   CVPixelBufferLockBaseAddress(outputPixelBuffer, 0);
   // NV12
@@ -74,7 +74,7 @@
   uint8_t* dstUV = CVPixelBufferGetBaseAddressOfPlane(outputPixelBuffer, 1);
   const size_t dstUVStride = CVPixelBufferGetBytesPerRowOfPlane(outputPixelBuffer, 1);
 
-  [RTCYUVHelper I420ToNV12:i420Buffer.dataY
+  [LKRTCYUVHelper I420ToNV12:i420Buffer.dataY
                 srcStrideY:i420Buffer.strideY
                       srcU:i420Buffer.dataU
                 srcStrideU:i420Buffer.strideU

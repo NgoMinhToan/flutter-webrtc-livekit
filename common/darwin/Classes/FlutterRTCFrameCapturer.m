@@ -10,13 +10,13 @@
 @import CoreVideo;
 
 @implementation FlutterRTCFrameCapturer {
-  RTCVideoTrack* _track;
+  LKRTCVideoTrack* _track;
   NSString* _path;
   FlutterResult _result;
   bool _gotFrame;
 }
 
-- (instancetype)initWithTrack:(RTCVideoTrack*)track
+- (instancetype)initWithTrack:(LKRTCVideoTrack*)track
                        toPath:(NSString*)path
                        result:(FlutterResult)result {
   self = [super init];
@@ -33,18 +33,18 @@
 - (void)setSize:(CGSize)size {
 }
 
-- (void)renderFrame:(nullable RTCVideoFrame*)frame {
+- (void)renderFrame:(nullable LKRTCVideoFrame*)frame {
   if (_gotFrame || frame == nil)
     return;
   _gotFrame = true;
-  id<RTCVideoFrameBuffer> buffer = frame.buffer;
+  id<LKRTCVideoFrameBuffer> buffer = frame.buffer;
   CVPixelBufferRef pixelBufferRef;
   bool shouldRelease;
-  if (![buffer isKindOfClass:[RTCCVPixelBuffer class]]) {
+  if (![buffer isKindOfClass:[LKRTCCVPixelBuffer class]]) {
     pixelBufferRef = [self convertToCVPixelBuffer:frame];
     shouldRelease = true;
   } else {
-    pixelBufferRef = ((RTCCVPixelBuffer*)buffer).pixelBuffer;
+    pixelBufferRef = ((LKRTCCVPixelBuffer*)buffer).pixelBuffer;
     shouldRelease = false;
   }
   CIImage* ciImage = [CIImage imageWithCVPixelBuffer:pixelBufferRef];
@@ -108,8 +108,8 @@
   });
 }
 
-- (CVPixelBufferRef)convertToCVPixelBuffer:(RTCVideoFrame*)frame {
-  id<RTCI420Buffer> i420Buffer = [frame.buffer toI420];
+- (CVPixelBufferRef)convertToCVPixelBuffer:(LKRTCVideoFrame*)frame {
+  id<LKRTCI420Buffer> i420Buffer = [frame.buffer toI420];
   CVPixelBufferRef outputPixelBuffer;
   size_t w = (size_t)roundf(i420Buffer.width);
   size_t h = (size_t)roundf(i420Buffer.height);
@@ -126,7 +126,7 @@
     uint8_t* dstUV = CVPixelBufferGetBaseAddressOfPlane(outputPixelBuffer, 1);
     const size_t dstUVStride = CVPixelBufferGetBytesPerRowOfPlane(outputPixelBuffer, 1);
 
-    [RTCYUVHelper I420ToNV12:i420Buffer.dataY
+    [LKRTCYUVHelper I420ToNV12:i420Buffer.dataY
                   srcStrideY:i420Buffer.strideY
                         srcU:i420Buffer.dataU
                   srcStrideU:i420Buffer.strideU
@@ -144,7 +144,7 @@
 
     if (pixelFormat == kCVPixelFormatType_32BGRA) {
       // Corresponds to libyuv::FOURCC_ARGB
-      [RTCYUVHelper I420ToARGB:i420Buffer.dataY
+      [LKRTCYUVHelper I420ToARGB:i420Buffer.dataY
                     srcStrideY:i420Buffer.strideY
                           srcU:i420Buffer.dataU
                     srcStrideU:i420Buffer.strideU
@@ -156,7 +156,7 @@
                         height:i420Buffer.height];
     } else if (pixelFormat == kCVPixelFormatType_32ARGB) {
       // Corresponds to libyuv::FOURCC_BGRA
-      [RTCYUVHelper I420ToBGRA:i420Buffer.dataY
+      [LKRTCYUVHelper I420ToBGRA:i420Buffer.dataY
                     srcStrideY:i420Buffer.strideY
                           srcU:i420Buffer.dataU
                     srcStrideU:i420Buffer.strideU
