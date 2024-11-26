@@ -2,9 +2,9 @@
 
 #import <AVFoundation/AVFoundation.h>
 #import <CoreGraphics/CGImage.h>
-#import <WebRTC/RTCYUVHelper.h>
-#import <WebRTC/RTCYUVPlanarBuffer.h>
-#import <WebRTC/WebRTC.h>
+#import <LiveKitWebRTC/RTCYUVHelper.h>
+#import <LiveKitWebRTC/RTCYUVPlanarBuffer.h>
+#import <LiveKitWebRTC/LiveKitWebRTC.h>
 
 #import <objc/runtime.h>
 
@@ -61,8 +61,8 @@
   }
 }
 
-- (void)setVideoTrack:(RTCVideoTrack*)videoTrack {
-  RTCVideoTrack* oldValue = self.videoTrack;
+- (void)setVideoTrack:(LKRTCVideoTrack*)videoTrack {
+  LKRTCVideoTrack* oldValue = self.videoTrack;
 
   if (oldValue != videoTrack) {
     _isFirstFrameRendered = false;
@@ -79,7 +79,7 @@
   }
 }
 
-- (id<RTCI420Buffer>)correctRotation:(const id<RTCI420Buffer>)src
+- (id<LKRTCI420Buffer>)correctRotation:(const id<LKRTCI420Buffer>)src
                         withRotation:(RTCVideoRotation)rotation {
   int rotated_width = src.width;
   int rotated_height = src.height;
@@ -90,10 +90,10 @@
     rotated_height = temp;
   }
 
-  id<RTCI420Buffer> buffer = [[RTCI420Buffer alloc] initWithWidth:rotated_width
+  id<LKRTCI420Buffer> buffer = [[LKRTCI420Buffer alloc] initWithWidth:rotated_width
                                                            height:rotated_height];
 
-  [RTCYUVHelper I420Rotate:src.dataY
+  [LKRTCYUVHelper I420Rotate:src.dataY
                 srcStrideY:src.strideY
                       srcU:src.dataU
                 srcStrideU:src.strideU
@@ -113,8 +113,8 @@
 }
 
 - (void)copyI420ToCVPixelBuffer:(CVPixelBufferRef)outputPixelBuffer
-                      withFrame:(RTCVideoFrame*)frame {
-  id<RTCI420Buffer> i420Buffer = [self correctRotation:[frame.buffer toI420]
+                      withFrame:(LKRTCVideoFrame*)frame {
+  id<LKRTCI420Buffer> i420Buffer = [self correctRotation:[frame.buffer toI420]
                                           withRotation:frame.rotation];
   CVPixelBufferLockBaseAddress(outputPixelBuffer, 0);
 
@@ -127,7 +127,7 @@
     uint8_t* dstUV = CVPixelBufferGetBaseAddressOfPlane(outputPixelBuffer, 1);
     const size_t dstUVStride = CVPixelBufferGetBytesPerRowOfPlane(outputPixelBuffer, 1);
 
-    [RTCYUVHelper I420ToNV12:i420Buffer.dataY
+    [LKRTCYUVHelper I420ToNV12:i420Buffer.dataY
                   srcStrideY:i420Buffer.strideY
                         srcU:i420Buffer.dataU
                   srcStrideU:i420Buffer.strideU
@@ -147,7 +147,7 @@
     if (pixelFormat == kCVPixelFormatType_32BGRA) {
       // Corresponds to libyuv::FOURCC_ARGB
 
-      [RTCYUVHelper I420ToARGB:i420Buffer.dataY
+      [LKRTCYUVHelper I420ToARGB:i420Buffer.dataY
                     srcStrideY:i420Buffer.strideY
                           srcU:i420Buffer.dataU
                     srcStrideU:i420Buffer.strideU
@@ -160,7 +160,7 @@
 
     } else if (pixelFormat == kCVPixelFormatType_32ARGB) {
       // Corresponds to libyuv::FOURCC_BGRA
-      [RTCYUVHelper I420ToBGRA:i420Buffer.dataY
+      [LKRTCYUVHelper I420ToBGRA:i420Buffer.dataY
                     srcStrideY:i420Buffer.strideY
                           srcU:i420Buffer.dataU
                     srcStrideU:i420Buffer.strideU
@@ -177,7 +177,7 @@
 }
 
 #pragma mark - RTCVideoRenderer methods
-- (void)renderFrame:(RTCVideoFrame*)frame {
+- (void)renderFrame:(LKRTCVideoFrame*)frame {
   [self copyI420ToCVPixelBuffer:_pixelBufferRef withFrame:frame];
 
   __weak FlutterRTCVideoRenderer* weakSelf = self;
@@ -264,7 +264,7 @@
   return [[FlutterRTCVideoRenderer alloc] initWithTextureRegistry:registry messenger:messenger];
 }
 
-- (void)rendererSetSrcObject:(FlutterRTCVideoRenderer*)renderer stream:(RTCVideoTrack*)videoTrack {
+- (void)rendererSetSrcObject:(FlutterRTCVideoRenderer*)renderer stream:(LKRTCVideoTrack*)videoTrack {
   renderer.videoTrack = videoTrack;
 }
 @end

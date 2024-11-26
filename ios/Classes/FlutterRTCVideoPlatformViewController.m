@@ -39,24 +39,24 @@
   return _videoView;
 }
 
-- (void)setVideoTrack:(RTCVideoTrack*)videoTrack {
-  RTCVideoTrack* oldValue = self.videoTrack;
+- (void)setVideoTrack:(LKRTCVideoTrack*)videoTrack {
+  LKRTCVideoTrack* oldValue = self.videoTrack;
   if (oldValue == videoTrack) {
     return;
   }
   _videoTrack = videoTrack;
   _isFirstFrameRendered = false;
   if (!oldValue) {
-    [oldValue removeRenderer:(id<RTCVideoRenderer>)self];
+    [oldValue removeRenderer:(id<LKRTCVideoRenderer>)self];
     _videoView.frame = CGRectZero;
   }
   if (videoTrack) {
-    [videoTrack addRenderer:(id<RTCVideoRenderer>)self];
+    [videoTrack addRenderer:(id<LKRTCVideoRenderer>)self];
   }
 }
 
 #pragma mark - RTCVideoRenderer methods
-- (void)renderFrame:(RTCVideoFrame*)frame {
+- (void)renderFrame:(LKRTCVideoFrame*)frame {
   if (_renderSize.width != frame.width || _renderSize.height != frame.height ||
       !_isFirstFrameRendered) {
     if (self.eventSink) {
